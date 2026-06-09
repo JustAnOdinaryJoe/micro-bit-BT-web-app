@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Micro:bit Command Center</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="background-glow"></div>
+
+<div class="container">
+
+    <header>
+        <h1>🤖 Micro:bit Command Center</h1>
+        <p>Control. Monitor. Cause harmless chaos.</p>
+    </header>
+
+    <button class="connect-btn" onclick="connect()">
+        CONNECT
+    </button>
+
+    <div class="dashboard">
+
+        <div class="card">
+            <h2>Status</h2>
+            <p id="status">🔴 Disconnected</p>
+        </div>
+
+        <div class="card">
+            <h2>Send Message</h2>
+
+            <div class="send-row">
+                <input id="message" placeholder="Type something...">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+
+        </div>
+
+        <div class="card">
+            <h2>📡 Terminal</h2>
+            <div id="log"></div>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>

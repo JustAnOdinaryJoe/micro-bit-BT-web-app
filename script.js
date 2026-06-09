@@ -14,61 +14,123 @@ const RX_CHARACTERISTIC =
 '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
 function log(msg) {
-    document.getElementById("log").innerHTML +=
-        msg + "<br>";
+    const logDiv = document.getElementById("log");
+
+    const line = document.createElement("div");
+    line.textContent = msg;
+
+    logDiv.appendChild(line);
+
+    logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+function setStatus(text) {
+    document.getElementById("status").textContent = text;
 }
 
 async function connect() {
 
-    device =
-    await navigator.bluetooth.requestDevice({
-        filters: [
-            { namePrefix: "BBC micro:bit" }
-        ],
-        optionalServices: [UART_SERVICE]
-    });
+    try {
 
-    server = await device.gatt.connect();
+        setStatus("🟡 Connecting...");
 
-    uartService =
-    await server.getPrimaryService(UART_SERVICE);
+        device =
+        await navigator.bluetooth.requestDevice({
+            filters: [
+                { namePrefix: "BBC micro:bit" }
+            ],
+            optionalServices: [UART_SERVICE]
+        });
 
-    txCharacteristic =
-    await uartService.getCharacteristic(
-        TX_CHARACTERISTIC
-    );
+        device.addEventListener(
+            "gattserverdisconnected",
+            () => {
+                setStatus("🔴 Disconnected");
+                log("Connection lost");
+            }
+        );
 
-    rxCharacteristic =
-    await uartService.getCharacteristic(
-        RX_CHARACTERISTIC
-    );
+        server = await device.gatt.connect();
 
-    await rxCharacteristic.startNotifications();
+        uartService =
+        await server.getPrimaryService(
+            UART_SERVICE
+        );
 
-    rxCharacteristic.addEventListener(
-        'characteristicvaluechanged',
-        event => {
+        txCharacteristic =
+        await uartService.getCharacteristic(
+            TX_CHARACTERISTIC
+        );
 
-            const value =
-            new TextDecoder().decode(
-                event.target.value
-            );
+        rxCharacteristic =
+        await uartService.getCharacteristic(
+            RX_CHARACTERISTIC
+        );
 
-            log("Micro:bit: " + value);
-        }
-    );
+        await rxCharacteristic.startNotifications();
 
-    log("Connected!");
+        rxCharacteristic.addEventListener(
+            "characteristicvaluechanged",
+            event => {
+
+                const value =
+                new TextDecoder().decode(
+                    event.target.value
+                );
+
+                log("🤖 " + value);
+            }
+        );
+
+        setStatus("🟢 Connected");
+        log("Connected to micro:bit");
+
+    } catch(err) {
+
+        console.error(err);
+
+        setStatus("🔴 Failed");
+
+        log("Error: " + err.message);
+    }
 }
 
 async function sendMessage() {
 
-    const msg =
-    document.getElementById("message").value;
+    if (!txCharacteristic) {
+        log("⚠ Not connected");
+        return;
+    }
 
-    await txCharacteristic.writeValue(
-        new TextEncoder().encode(msg)
-    );
+    const input =
+    document.getElementById("message");
 
-    log("You: " + msg);
+    const msg = input.value.trim();
+
+    if (!msg) return;
+
+    try {
+
+        await txCharacteristic.writeValue(
+            new TextEncoder().encode(msg + "\n")
+        );
+
+        log("👤 " + msg);
+
+        input.value = "";
+
+    } catch(err) {
+
+        log("Send failed: " + err.message);
+    }
 }
+
+document
+.getElementById("message")
+.addEventListener("keydown", e => {
+
+    if (e.key === "Enter") {
+        sendMessage();
+    }
+
+});
